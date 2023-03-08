@@ -7,7 +7,6 @@ from keras.datasets import mnist
 import time
 from pathlib import Path
 
-
 from vehicle import generate_loss_function
 from constraint_accuracy import get_constraint_accuracy
 
@@ -84,6 +83,10 @@ def train(
             f"Train acc: {float(train_acc):.4f}, Train loss: {float(train_loss):.4f} --- Test acc: {float(test_acc):.4f}, Test loss: {float(test_loss):.4f}"
         )
 
+        dataFile = open("classification-data.csv", "a")
+        dataFile.write(str(epoch + 1) + "," + os.getenv('DLV') + "," + os.getenv('RATIOV') + "," + str(float(test_acc)) + "\n")
+        dataFile.close()
+        
     return model
 
 
@@ -105,10 +108,13 @@ if __name__ == "__main__":
     networks = {"mnist": model}
 
     batch_size = 64
-    epochs = 10
-    alfa = 1
-    beta = 1
-
+    # epochs = 10
+    # alfa = 1
+    # beta = 1
+    epochs = int(os.getenv('EPOCHV'))
+    alfa = 100 - int(os.getenv('RATIOV'))
+    beta = int(os.getenv('RATIOV'))
+    
     (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
     # Scale images to the [0, 1] range
@@ -135,7 +141,6 @@ if __name__ == "__main__":
         "pertubation": lambda: np.random.uniform(low=-0.1, high=0.01, size=(28, 28)),
     }
 
-
     model = train(
         model,
         train_dataset,
@@ -154,16 +159,20 @@ if __name__ == "__main__":
     #---- uncomment if you'd like to save the trained model
     #model.save('dl2_training')
     
-
     #---- uncomment to get constraint accuracy for the model 
+    indexes = np.random.randint(0, X_train.shape[0], size=1000)
+    images = X_train[indexes]
+    labels = y_train[indexes]
 
-    #indexes = np.random.randint(0, X_train.shape[0], size=1000)
-    #images = X_train[indexes]
-    #labels = y_train[indexes]
-
-    #epsilon = 0.01
-    #delta = 0.02
+    epsilon = 0.01
+    # delta = 0.02
     
-    #constraint_acc = get_constraint_accuracy(model, images, labels, epsilon, delta)
-    #print(constraint_acc)
+    dataFile = open("constraint-data.csv", "a")
+    deltas = [0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025]
+    for delta in deltas:
+        constraint_acc = get_constraint_accuracy(model, images, labels, epsilon, delta)
+        print("delta=", delta, ", constraint satisfaction=", constraint_acc)
+        dataFile.write(str(int(os.getenv('EPOCHV'))) + "," + os.getenv('DLV') + "," + os.getenv('RATIOV') + "," + str(delta) + "," + str(float(constraint_acc)) + "\n")
+
+    dataFile.close()
 
