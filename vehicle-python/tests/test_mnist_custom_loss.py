@@ -1,5 +1,6 @@
 import random
 
+import os
 import numpy as np
 import tensorflow as tf
 import tensorflow.keras as keras
@@ -8,7 +9,7 @@ import time
 from pathlib import Path
 
 from vehicle import generate_loss_function
-from constraint_accuracy import get_constraint_accuracy
+from constraint_accuracy import get_constraint_accuracy_fgsm
 
 
 def train(
@@ -46,6 +47,9 @@ def train(
         start_time = time.time()
         # Iterate over the batches of the dataset.
         for x_batch_train, y_batch_train in train_dataset:
+            # print("SHAPE[0] " + str(x_batch_train.shape[0]))  -> 64
+            # print("SHAPE[1] " + str(x_batch_train.shape[1]))  -> 28
+            # print("SHAPE[2] " + str(x_batch_train.shape[2]))  -> 28
             
             # Open a GradientTape to record the operations run during the forward pass, which enables auto-differentiation.
             with tf.GradientTape() as tape:
@@ -159,8 +163,9 @@ if __name__ == "__main__":
     #---- uncomment if you'd like to save the trained model
     #model.save('dl2_training')
     
-    #---- uncomment to get constraint accuracy for the model 
-    indexes = np.random.randint(0, X_train.shape[0], size=1000)
+    #---- uncomment to get constraint accuracy for the model
+    constraint_sample_size = 1000
+    indexes = np.random.randint(0, X_train.shape[0], size=constraint_sample_size)
     images = X_train[indexes]
     labels = y_train[indexes]
 
@@ -168,9 +173,10 @@ if __name__ == "__main__":
     # delta = 0.02
     
     dataFile = open("constraint-data.csv", "a")
-    deltas = [0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025]
+    # deltas = [0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025]
+    deltas = [0.02]
     for delta in deltas:
-        constraint_acc = get_constraint_accuracy(model, images, labels, epsilon, delta)
+        constraint_acc = get_constraint_accuracy_fgsm(model, tf.data.Dataset.from_tensor_slices(images), labels, constraint_sample_size, epsilon, delta)
         print("delta=", delta, ", constraint satisfaction=", constraint_acc)
         dataFile.write(str(int(os.getenv('EPOCHV'))) + "," + os.getenv('DLV') + "," + os.getenv('RATIOV') + "," + str(delta) + "," + str(float(constraint_acc)) + "\n")
 
