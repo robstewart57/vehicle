@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 from vehicle import generate_loss_function
-from constraint_accuracy import get_constraint_accuracy_fgsm
+from constraint_accuracy import get_constraint_accuracy_random, get_constraint_accuracy_fgsm
 
 
 def train(
@@ -176,7 +176,8 @@ if __name__ == "__main__":
     # deltas = [0.015,0.016,0.017,0.018,0.019,0.02,0.021,0.022,0.023,0.024,0.025]
     deltas = [0.02]
     for delta in deltas:
-        constraint_acc = get_constraint_accuracy_fgsm(model, tf.data.Dataset.from_tensor_slices(images), labels, constraint_sample_size, epsilon, delta)
+        # constraint_acc = get_constraint_accuracy_fgsm(model, tf.data.Dataset.from_tensor_slices(images), labels, constraint_sample_size, epsilon, delta)
+        constraint_acc = get_constraint_accuracy_random(model, images, epsilon, delta)
         print("delta=", delta, ", constraint satisfaction=", constraint_acc)
         dataFile.write(str(int(os.getenv('EPOCHV'))) + "," + os.getenv('DLV') + "," + os.getenv('RATIOV') + "," + str(delta) + "," + str(float(constraint_acc)) + "\n")
 

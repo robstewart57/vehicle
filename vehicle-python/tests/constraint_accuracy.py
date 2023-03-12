@@ -48,7 +48,7 @@ def get_constraint_accuracy_fgsm(model, images, labels, num_labels, epsilon, del
         i = i + 1
     return counter/num_labels
 
-def get_constraint_accuracy_random(model, images, labels_unused, epsilon, delta):
+def get_constraint_accuracy_random(model, images, epsilon, delta):
     counter = 0
     images_perturbed = images + np.random.uniform(-epsilon, epsilon, images.shape)
     labels_original_images = model.predict(images)
